@@ -107,7 +107,7 @@ def shade_color(count, max_count):
 # ---------- Main App ----------
 def main():
     st.title("🏸 Badminton Match Tracker")
-    st.caption("Players stored in UPPERCASE. Daily counters and matches resettable.")
+    st.caption("Daily counters and Match Records.")
 
     # ---- Register new player ----
     st.subheader("Register New Player")
@@ -141,7 +141,7 @@ def main():
                 st.success("Match added successfully!")
 
     # ---- Match History (Reverse Chronological) ----
-    st.subheader("🕹️ Match History (Latest First)")
+    st.subheader("🕹️ Match History")
     if data["matches"]:
         max_today = max([today_matches_count(p) for p in data["player_stats"]], default=1)
 
