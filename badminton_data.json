@@ -1,0 +1,74 @@
+{
+  "date": "2025-10-08",
+  "player_stats": {
+    "HANUMAN JI": 2,
+    "VIKASH": 0,
+    "VICKY": 0,
+    "CA SAHAB": 3,
+    "CBO SAHAB": 2,
+    "ROOP SAHAB": 0,
+    "NATANI JI": 0,
+    "DEEPESH": 2,
+    "VIVEK AWASTHI": 0,
+    "BHUPI": 2,
+    "ANKIT": 1,
+    "PULKIT": 0,
+    "NAITIK": 0,
+    "TARUN JI": 0,
+    "SUNIL JI": 0,
+    "SONU BHAIYA": 0
+  },
+  "name_map": {
+    "HANUMAN JI": "HANUMAN JI",
+    "VIKASH": "VIKASH",
+    "VICKY": "VICKY",
+    "CA SAHAB": "CA SAHAB",
+    "CBO SAHAB": "CBO SAHAB",
+    "ROOP SAHAB": "ROOP SAHAB",
+    "NATANI JI": "NATANI JI",
+    "DEEPESH": "DEEPESH",
+    "VIVEK AWASTHI": "VIVEK AWASTHI",
+    "BHUPI": "BHUPI",
+    "ANKIT": "ANKIT",
+    "PULKIT": "PULKIT",
+    "NAITIK": "NAITIK",
+    "TARUN JI": "TARUN JI",
+    "SUNIL JI": "SUNIL JI",
+    "SONU BHAIYA": "SONU BHAIYA"
+  },
+  "matches": [
+    {
+      "id": 1,
+      "players": [
+        "BHUPI",
+        "CA SAHAB",
+        "ANKIT",
+        "CBO SAHAB"
+      ],
+      "time": "12:46",
+      "remark": ""
+    },
+    {
+      "id": 2,
+      "players": [
+        "DEEPESH",
+        "HANUMAN JI",
+        "CA SAHAB",
+        "CBO SAHAB"
+      ],
+      "time": "12:46",
+      "remark": ""
+    },
+    {
+      "id": 3,
+      "players": [
+        "BHUPI",
+        "DEEPESH",
+        "CA SAHAB",
+        "HANUMAN JI"
+      ],
+      "time": "12:50",
+      "remark": ""
+    }
+  ]
+}
