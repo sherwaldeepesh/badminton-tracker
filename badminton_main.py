@@ -9,7 +9,7 @@ IST = pytz.timezone("Asia/Kolkata")
 today = datetime.now(IST).date()
 DATA_FILE = "badminton_data.json"
 
-st.set_page_config(page_title="Badminton Game Tracker", layout="centered")
+st.set_page_config(page_title="Badminton Tracker", layout="centered", page_icon="🏸")
 
 # ------------------ HELPER FUNCTIONS ------------------
 def save_data(data):
@@ -35,23 +35,6 @@ def load_data():
 
     return data
 
-
-def get_time_range_label(time_obj):
-    t = time_obj.hour * 60 + time_obj.minute
-    if 5 * 60 + 31 <= t <= 6 * 60 + 30:
-        return "5:31–6:30"
-    elif 6 * 60 + 31 <= t <= 7 * 60:
-        return "6:31–7:00"
-    elif 7 * 60 + 1 <= t <= 7 * 60 + 30:
-        return "7:01–7:30"
-    elif 7 * 60 + 31 <= t <= 8 * 60:
-        return "7:31–8:00"
-    elif 8 * 60 + 1 <= t <= 10 * 60:
-        return "8:01–10:00"
-    else:
-        return "Other"
-
-
 def reset_data():
     data = load_data()
     players = list(data.get("player_stats", {}).keys())
@@ -65,29 +48,23 @@ def reset_data():
 
 # ------------------ MAIN APP ------------------
 def main():
-    st.title("🏸 Badminton Game Tracker")
+    st.title("🏸 Badminton Tracker")
 
     # Load or initialize data
     data = load_data()
     players = list(data["player_stats"].keys())
 
-    # ---------------- MATCH HISTORY ----------------
-    st.markdown("## 🎯 Match History (Today)")
-    if data["matches"]:
-        for match in reversed(data["matches"]):  # latest first
-            st.markdown(
-                f"🕒 {match['time']} — 👥 {match['p1']} & {match['p2']} vs {match['p3']} & {match['p4']} — 🗒️ Remark: {match['remark']}"
-            )
-    else:
-        st.info("No matches recorded yet today.")
-
     # ---------------- ADD MATCH ----------------
     st.markdown("## ➕ Add New Match")
+    if not players:
+        st.warning("Please add players in the Manage Players section first.")
+        return
+
     col1, col2, col3, col4 = st.columns(4)
     p1 = col1.selectbox("Player 1", [""] + players, key="p1_sel")
-    p2 = col2.selectbox("Player 2", [""] + players, key="p2_sel")
-    p3 = col3.selectbox("Player 3", [""] + players, key="p3_sel")
-    p4 = col4.selectbox("Player 4", [""] + players, key="p4_sel")
+    p2 = col2.selectbox("Player 2", [""] + [p for p in players if p != p1], key="p2_sel")
+    p3 = col3.selectbox("Player 3", [""] + [p for p in players if p != p1 and p != p2], key="p3_sel")
+    p4 = col4.selectbox("Player 4", [""] + [p for p in players if p not in [p1,p2,p3]], key="p4_sel")
     remark = st.text_input("Remark (optional)", key="remark_input")
 
     if st.button("✅ Add Match"):
@@ -102,7 +79,6 @@ def main():
                 "p3": p3,
                 "p4": p4,
                 "remark": remark if remark else "-",
-                "range": get_time_range_label(now),
             }
             data["matches"].append(match)
             for p in [p1, p2, p3, p4]:
@@ -111,44 +87,36 @@ def main():
             st.success("Match added successfully!")
             st.session_state.refresh_toggle = not st.session_state.get("refresh_toggle", False)
 
+    # ---------------- MATCH HISTORY ----------------
+    st.markdown("## 📜 Match History")
+    if data["matches"]:
+        for match in reversed(data["matches"]):  # latest first
+            st.markdown(
+                f"🕒 {match['time']} — 👥 {match['p1']} & {match['p2']} vs {match['p3']} & {match['p4']} — 🗒️ Remark: {match['remark']}"
+            )
+    else:
+        st.info("No matches recorded yet today.")
+
     # ---------------- PLAYER STATISTICS ----------------
     st.markdown("## 📊 Player Statistics")
     if data["player_stats"]:
-        stats_html = "<table><tr><th>Player</th><th>Matches Played</th></tr>"
+        stats_html = "<table style='width:100%; text-align:center;'><tr><th>Player</th><th>Matches Played</th></tr>"
         for player, count in sorted(data["player_stats"].items(), key=lambda x: x[1], reverse=True):
             stats_html += f"<tr><td>{player}</td><td>{count}</td></tr>"
         stats_html += "</table>"
         st.markdown(stats_html, unsafe_allow_html=True)
-    else:
-        st.info("No player statistics available yet.")
 
-    # ---------------- TOP ACTIVE PLAYERS ----------------
-    st.markdown("## 🔥 Top Active Players Today")
-    if data["player_stats"] and any(v > 0 for v in data["player_stats"].values()):
+        # Top Active Players
+        st.markdown("### 🔥 Top Active Players Today")
         top_players = sorted(data["player_stats"].items(), key=lambda x: x[1], reverse=True)
-        max_count = max(v for v in data["player_stats"].values())
+        max_count = max([v for v in data["player_stats"].values()] + [1])
         for p, c in top_players:
             if c == 0:
                 continue
             bar = "█" * int((c / max_count) * 20)
             st.markdown(f"**{p}** — {c} matches &nbsp;&nbsp;{bar}")
     else:
-        st.info("No matches played yet today.")
-
-    # ---------------- MATCHES BY TIME RANGE ----------------
-    st.markdown("## 🕒 Matches by Time Range")
-    if data["matches"]:
-        ranges = {}
-        for m in data["matches"]:
-            r = m["range"]
-            ranges[r] = ranges.get(r, 0) + 1
-        html = "<table><tr><th>Time Range</th><th>Matches</th></tr>"
-        for r, c in ranges.items():
-            html += f"<tr><td>{r}</td><td>{c}</td></tr>"
-        html += "</table>"
-        st.markdown(html, unsafe_allow_html=True)
-    else:
-        st.info("No matches played yet.")
+        st.info("No player statistics yet.")
 
     # ---------------- MANAGE PLAYERS ----------------
     st.markdown("## ⚙️ Manage Players")
@@ -176,9 +144,9 @@ def main():
                 st.warning("Select a player to remove.")
 
     # ---------------- RESET DATA ----------------
-    if st.button("🔄 Reset (Clear Matches & Counters)"):
+    if st.button("🔄 Reset Matches & Counters"):
         reset_data()
-        st.success("Data reset for the day!")
+        st.success("Match data and counters reset for today!")
 
 # ------------------ RUN ------------------
 if __name__ == "__main__":
