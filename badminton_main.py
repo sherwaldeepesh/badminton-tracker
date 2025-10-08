@@ -116,6 +116,16 @@ def main():
     else:
         st.info("No matches recorded yet today.")
 
+    # ---------------- PLAYER STATISTICS ----------------
+    st.markdown("## 📊 Player Statistics")
+    if data["player_stats"]:
+        stats_html = "<table style='width:100%; text-align:center; border-collapse: collapse;'>"
+        stats_html += "<tr style='background-color:#333; color:white;'><th>Player</th><th>Matches Played</th></tr>"
+        for player, count in sorted(data["player_stats"].items(), key=lambda x: x[1], reverse=True):
+            stats_html += f"<tr style='background-color:#222; color:#ddd;'><td>{player}</td><td>{count}</td></tr>"
+        stats_html += "</table>"
+        st.markdown(stats_html, unsafe_allow_html=True)
+
     # ---------------- TOP ACTIVE PLAYERS ----------------
     st.markdown("### 🔥 Top Active Players Today")
     top_players = sorted(data["player_stats"].items(), key=lambda x: x[1], reverse=True)
@@ -123,7 +133,7 @@ def main():
     for p, c in top_players:
         if c == 0:
             continue
-        bar = "█" * int((c / max_count) * 20)  # scaled bar
+        bar = "█" * int((c / max_count) * 20)
         st.markdown(f"**{p}** — {c} matches &nbsp;&nbsp;{bar}")
 
     # ---------------- MATCHES BY TIME RANGE ----------------
@@ -155,16 +165,6 @@ def main():
         range_html += f"<tr style='background-color:#222; color:#ddd;'><td>{r}</td><td>{c}</td></tr>"
     range_html += "</table>"
     st.markdown(range_html, unsafe_allow_html=True)
-
-    # ---------------- PLAYER STATISTICS ----------------
-    st.markdown("## 📊 Player Statistics")
-    if data["player_stats"]:
-        stats_html = "<table style='width:100%; text-align:center; border-collapse: collapse;'>"
-        stats_html += "<tr style='background-color:#333; color:white;'><th>Player</th><th>Matches Played</th></tr>"
-        for player, count in sorted(data["player_stats"].items(), key=lambda x: x[1], reverse=True):
-            stats_html += f"<tr style='background-color:#222; color:#ddd;'><td>{player}</td><td>{count}</td></tr>"
-        stats_html += "</table>"
-        st.markdown(stats_html, unsafe_allow_html=True)
 
     # ---------------- MANAGE PLAYERS ----------------
     st.markdown("## ⚙️ Manage Players")
