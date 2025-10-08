@@ -37,7 +37,7 @@ def normalize_name(name: str) -> str:
 
 def register_player(name: str):
     norm = normalize_name(name)
-    upper_name = name.strip().upper()
+    upper_name = norm
     if norm not in data["name_map"]:
         data["name_map"][norm] = upper_name
     if upper_name not in data["player_stats"]:
@@ -48,7 +48,6 @@ def register_player(name: str):
 
 def add_match(players, remark=""):
     match_id = len(data["matches"]) + 1
-    
     timestamp = datetime.now(timezone("Asia/Kolkata")).strftime("%H:%M")
     players_upper = [normalize_name(p) for p in players]
     data["matches"].append({"id": match_id, "players": players_upper, "time": timestamp, "remark": remark})
@@ -109,7 +108,7 @@ def shade_color(count, max_count):
 # ---------- Main App ----------
 def main():
     st.title("🏸 Badminton Match Tracker")
-    st.caption("Daily counters and Match Records.")
+    st.caption("Players stored in UPPERCASE. Daily counters and matches resettable.")
 
     # ---- Register new player ----
     st.subheader("Register New Player")
@@ -117,6 +116,49 @@ def main():
     if st.button("➕ Register Player") and new_player.strip():
         name_registered = register_player(new_player)
         st.success(f"Player '{name_registered}' registered successfully!")
+
+    # ---- Manage Players (Edit / Remove) ----
+    st.subheader("⚙️ Manage Players")
+    all_players = sorted(data["player_stats"].keys())
+
+    if all_players:
+        col1, col2 = st.columns(2)
+
+        # ---- Edit Name ----
+        with col1:
+            player_to_edit = st.selectbox("Select Player to Edit", [""] + all_players, key="edit_player")
+            new_name = st.text_input("New Name", key="new_name_input")
+            if st.button("✏️ Update Name"):
+                if player_to_edit and new_name.strip():
+                    norm_new = normalize_name(new_name)
+                    # Update player_stats
+                    data["player_stats"][norm_new] = data["player_stats"].pop(player_to_edit)
+                    # Update name_map
+                    data["name_map"].pop(player_to_edit, None)
+                    data["name_map"][norm_new] = norm_new
+                    # Update matches
+                    for m in data["matches"]:
+                        m["players"] = [norm_new if p == player_to_edit else p for p in m["players"]]
+                    save_data(data)
+                    st.success(f"Player '{player_to_edit}' renamed to '{norm_new}'")
+                    st.experimental_rerun()
+
+        # ---- Remove Player ----
+        with col2:
+            player_to_remove = st.selectbox("Select Player to Remove", [""] + all_players, key="remove_player")
+            if st.button("🗑️ Remove Player"):
+                if player_to_remove:
+                    # Remove from stats and name_map
+                    data["player_stats"].pop(player_to_remove, None)
+                    data["name_map"].pop(player_to_remove, None)
+                    # Remove from matches
+                    for m in data["matches"]:
+                        m["players"] = [p for p in m["players"] if p != player_to_remove]
+                    save_data(data)
+                    st.success(f"Player '{player_to_remove}' removed")
+                    st.experimental_rerun()
+    else:
+        st.info("No registered players to manage.")
 
     # ---- Add Match ----
     st.subheader("Add New Match")
@@ -143,7 +185,7 @@ def main():
                 st.success("Match added successfully!")
 
     # ---- Match History (Reverse Chronological) ----
-    st.subheader("🕹️ Match History")
+    st.subheader("🕹️ Match History (Latest First)")
     if data["matches"]:
         max_today = max([today_matches_count(p) for p in data["player_stats"]], default=1)
 
