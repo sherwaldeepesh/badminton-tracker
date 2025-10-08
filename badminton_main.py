@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import os
 from datetime import date, datetime
+from pytz import timezone
 
 st.set_page_config(page_title="🏸 Badminton Match Tracker", layout="centered", page_icon="🏸")
 
@@ -47,7 +48,8 @@ def register_player(name: str):
 
 def add_match(players, remark=""):
     match_id = len(data["matches"]) + 1
-    timestamp = datetime.now().strftime("%H:%M")
+    
+    timestamp = datetime.now(timezone("Asia/Kolkata")).strftime("%H:%M")
     players_upper = [normalize_name(p) for p in players]
     data["matches"].append({"id": match_id, "players": players_upper, "time": timestamp, "remark": remark})
     for p in players_upper:
