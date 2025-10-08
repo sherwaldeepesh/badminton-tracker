@@ -109,7 +109,7 @@ def shade_color(count, max_count):
 # ---------- Main App ----------
 def main():
     st.title("🏸 Badminton Match Tracker")
-    st.caption("Players stored in UPPERCASE. Daily counters and matches resettable.")
+    st.caption("Daily counters and matches resettable.")
 
     # ---- Register new player ----
     st.subheader("Register New Player")
