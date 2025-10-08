@@ -1,13 +1,14 @@
 import streamlit as st
 import json
 import os
-from datetime import date, datetime
-from pytz import timezone
+from datetime import datetime, date, timedelta
+import pytz
 
 st.set_page_config(page_title="🏸 Badminton Match Tracker", layout="centered", page_icon="🏸")
 
 DATA_FILE = "badminton_data.json"
-today = str(date.today())
+IST = pytz.timezone("Asia/Kolkata")
+today = datetime.now(IST).date()
 
 if "refresh_toggle" not in st.session_state:
     st.session_state.refresh_toggle = False
@@ -15,11 +16,11 @@ if "refresh_toggle" not in st.session_state:
 # ---------- File helpers ----------
 def load_data():
     if not os.path.exists(DATA_FILE):
-        return {"date": today, "player_stats": {}, "name_map": {}, "matches": []}
+        return {"date": today.strftime("%Y-%m-%d"), "player_stats": {}, "name_map": {}, "matches": []}
     with open(DATA_FILE, "r") as f:
         d = json.load(f)
-    if d.get("date") != today:
-        d["date"] = today
+    if d.get("date") != today.strftime("%Y-%m-%d"):
+        d["date"] = today.strftime("%Y-%m-%d")
         d["player_stats"] = {}
         d["matches"] = []
         save_data(d)
@@ -48,7 +49,7 @@ def register_player(name: str):
 
 def add_match(players, remark=""):
     match_id = len(data["matches"]) + 1
-    timestamp = datetime.now(timezone("Asia/Kolkata")).strftime("%H:%M")
+    timestamp = datetime.now(IST).strftime("%H:%M")
     players_upper = [normalize_name(p) for p in players]
     data["matches"].append({"id": match_id, "players": players_upper, "time": timestamp, "remark": remark})
     for p in players_upper:
@@ -116,49 +117,6 @@ def main():
     if st.button("➕ Register Player") and new_player.strip():
         name_registered = register_player(new_player)
         st.success(f"Player '{name_registered}' registered successfully!")
-
-    # ---- Manage Players (Edit / Remove) ----
-    st.subheader("⚙️ Manage Players")
-    all_players = sorted(data["player_stats"].keys())
-
-    if all_players:
-        col1, col2 = st.columns(2)
-
-        # ---- Edit Name ----
-        with col1:
-            player_to_edit = st.selectbox("Select Player to Edit", [""] + all_players, key="edit_player")
-            new_name = st.text_input("New Name", key="new_name_input")
-            if st.button("✏️ Update Name"):
-                if player_to_edit and new_name.strip():
-                    norm_new = normalize_name(new_name)
-                    # Update player_stats
-                    data["player_stats"][norm_new] = data["player_stats"].pop(player_to_edit)
-                    # Update name_map
-                    data["name_map"].pop(player_to_edit, None)
-                    data["name_map"][norm_new] = norm_new
-                    # Update matches
-                    for m in data["matches"]:
-                        m["players"] = [norm_new if p == player_to_edit else p for p in m["players"]]
-                    save_data(data)
-                    st.success(f"Player '{player_to_edit}' renamed to '{norm_new}'")
-                    st.experimental_rerun()
-
-        # ---- Remove Player ----
-        with col2:
-            player_to_remove = st.selectbox("Select Player to Remove", [""] + all_players, key="remove_player")
-            if st.button("🗑️ Remove Player"):
-                if player_to_remove:
-                    # Remove from stats and name_map
-                    data["player_stats"].pop(player_to_remove, None)
-                    data["name_map"].pop(player_to_remove, None)
-                    # Remove from matches
-                    for m in data["matches"]:
-                        m["players"] = [p for p in m["players"] if p != player_to_remove]
-                    save_data(data)
-                    st.success(f"Player '{player_to_remove}' removed")
-                    st.experimental_rerun()
-    else:
-        st.info("No registered players to manage.")
 
     # ---- Add Match ----
     st.subheader("Add New Match")
@@ -250,7 +208,7 @@ def main():
         st.markdown("<div style='display:flex; justify-content:center; gap:10px; flex-wrap:wrap;'>", unsafe_allow_html=True)
         for p, c in top_players:
             bar_color = shade_color(c, max_count)
-            width_px = max(int((c / max_count) * 360), 80)
+            width_px = max(int((c / max_count) * 380), 80)
             st.markdown(f"""
             <div style='background-color:{bar_color}; width:{width_px}px; padding:8px; 
             color:white; border-radius:5px; text-align:center; display:inline-block;'>{p} ({c})</div>
@@ -275,6 +233,49 @@ def main():
     if st.button("🔄 Reset Counters & Match History (Keep Players)"):
         reset_counters()
         st.success("Counters and match history reset, players retained!")
+
+    # ---------- Manage Players (Edit / Remove) moved to bottom ----------
+    st.subheader("⚙️ Manage Players")
+    all_players = sorted(data["player_stats"].keys())
+
+    if all_players:
+        col1, col2 = st.columns(2)
+
+        # ---- Edit Name ----
+        with col1:
+            player_to_edit = st.selectbox("Select Player to Edit", [""] + all_players, key="edit_player")
+            new_name = st.text_input("New Name", key="new_name_input")
+            if st.button("✏️ Update Name"):
+                if player_to_edit and new_name.strip():
+                    norm_new = normalize_name(new_name)
+                    # Update player_stats
+                    data["player_stats"][norm_new] = data["player_stats"].pop(player_to_edit)
+                    # Update name_map
+                    data["name_map"].pop(player_to_edit, None)
+                    data["name_map"][norm_new] = norm_new
+                    # Update matches
+                    for m in data["matches"]:
+                        m["players"] = [norm_new if p == player_to_edit else p for p in m["players"]]
+                    save_data(data)
+                    st.success(f"Player '{player_to_edit}' renamed to '{norm_new}'")
+                    st.session_state.refresh_toggle = not st.session_state.refresh_toggle
+
+        # ---- Remove Player ----
+        with col2:
+            player_to_remove = st.selectbox("Select Player to Remove", [""] + all_players, key="remove_player")
+            if st.button("🗑️ Remove Player"):
+                if player_to_remove:
+                    # Remove from stats and name_map
+                    data["player_stats"].pop(player_to_remove, None)
+                    data["name_map"].pop(player_to_remove, None)
+                    # Remove from matches
+                    for m in data["matches"]:
+                        m["players"] = [p for p in m["players"] if p != player_to_remove]
+                    save_data(data)
+                    st.success(f"Player '{player_to_remove}' removed")
+                    st.session_state.refresh_toggle = not st.session_state.refresh_toggle
+    else:
+        st.info("No registered players to manage.")
 
 # Run the app
 main()
